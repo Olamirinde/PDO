@@ -45,14 +45,14 @@ $teachers_Data = [
 $data = $teacher->getAllTeachers(1, 10);
 print_r($data);
 
-// $teacher = new Teacher();
-// $teacher->getAllTeachers();
-// $allTeachers = $teachers->getAllTeachers();
-// print_r($allTeachers);
 
 
-// $oneTeacher = $teachers->getOneTeacher(2);
-// print_r($oneTeacher);
+$result = $teacher->updateTeachers(1, [
+    'first_name' => 'Adekunle',
+    'salary'     => 450000,
+    'president' => 'Tinubu',
+
+]);
 
 
 

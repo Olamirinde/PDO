@@ -10,6 +10,18 @@ class Teacher
     private $password   = "Admin@1234";
     private $dbname     = "school_management";
 
+    private $allowedColumns = [
+        'first_name',
+        'last_name',
+        'gender',
+        'date_of_birth',
+        'email',
+        'phone',
+        'address',
+        'salary',
+        'status_id'
+    ];
+
 
     public function __construct()
     {
@@ -94,7 +106,7 @@ class Teacher
 
         $stmt = $this->conn->prepare("
             SELECT * FROM {$this->table}
-            ORDER BY id DESC
+            ORDER BY id ASC
             LIMIT :limit OFFSET :offset
         "); 
 
@@ -149,30 +161,49 @@ class Teacher
     // UPDATE teacher
     public function updateTeachers($id, $data)
     {
-        $stmt = $this->conn->prepare("
+        $filteredData = array_intersect_key(
+            $data,
+            array_flip($this->allowedColumns)
+        );
+
+        if (empty($filteredData)) {
+            return [
+                'success' => false,
+                'message' => 'No valid fields provided for update.'
+            ];
+        }
+
+        
+        $setParts = [];
+
+        foreach ($filteredData as $column => $value) {
+            $setParts[] = "{$column} = :{$column}";
+        }
+
+        $setString = implode(', ', $setParts);
+
+       
+        $sql = "
             UPDATE {$this->table}
             SET
-                first_name    = :first_name,
-                last_name     = :last_name,
-                gender        = :gender,
-                date_of_birth = :date_of_birth,
-                email         = :email,
-                phone         = :phone,
-                address       = :address,
-                salary        = :salary
+                {$setString},
+                modified_at = NOW()
             WHERE id = :id
-        ");
+        ";
 
-        return $stmt->execute([
-            'first_name'    => $data['first_name'],
-            'last_name'     => $data['last_name'],
-            'gender'        => $data['gender'],
-            'date_of_birth' => $data['date_of_birth'],
-            'email'         => $data['email'],
-            'phone'         => $data['phone'],
-            'address'       => $data['address'],
-            'salary'        => $data['salary'],
-            'id'            => $id,
-        ]);
+        
+        $stmt = $this->conn->prepare($sql);
+
+        
+        $filteredData['id'] = $id;
+
+        $success = $stmt->execute($filteredData);
+
+        return [
+            'success' => $success,
+            'message' => $success
+                ? 'Teacher updated successfully.'
+                : 'Update failed.'
+        ];
     }
 }
